@@ -459,7 +459,7 @@ var FieldAnalysis = function (vm, fieldName, fieldType) {
       }
     } else {
       if (self.terms.data().length == 0) {
-         self.getTerms();
+        self.getTerms();
       }
     }
   }
@@ -740,16 +740,31 @@ var Collection = function (vm, collection) {
     } else {
       return facet.widgetType() == 'hit-widget' ? ALPHA_HIT_COUNTER_OPTIONS : ALPHA_HIT_OPTIONS;
     }
-  }
+  };
 
   // Very top facet
   self._addObservablesToFacet = function(facet, vm) {
     if (facet.properties && facet.properties.facets_form && facet.properties.facets_form.aggregate) { // Only Solr 5+
-      facet.properties.facets_form.aggregate.metrics = ko.computed(function() {
-        var _field = self.getTemplateField(facet.properties.facets_form.field(), self.template.fieldsAttributes());
-        return self._get_field_operations(_field, facet);
-      });
+    	
+      // count not possible on hit-widget
+    	
+      facet.properties.facets_form.aggregate.metrics = HIT_OPTIONS;//ko.computed(function() {
+//        var _field = self.getTemplateField(facet.properties.facets_form.field(), self.template.fieldsAttributes());
+//        return self._get_field_operations(_field, facet);
+//      });
 
+      // Here we could weight the fields
+      facet.properties.facets_form.aggregate.facetFieldsNames = ko.computed(function() {
+    	 if (['avg', 'sum', 'median', 'percentile', 'stddev', 'variance'].indexOf(facet.properties.facets_form.aggregate.function()) != -1) {
+    	   return $.grep(self.template.facetFieldsNames(), function(field) {
+    	     return isNumericColumn(field.type()) || isDateTimeColumn(field.type());
+    	   });
+    	   // filter isNumericColumn, isDateTimeColumn
+    	 } else {
+    	    return self.template.facetFieldsNames();
+    	 }
+      });
+      
       facet.properties.facets_form.isEditing = ko.observable(true);
 
       if (facet.properties.facets) {
@@ -864,10 +879,21 @@ var Collection = function (vm, collection) {
         vm.search();
       });
 
-      nestedFacet.aggregate.metrics = ko.computed(function() {
-        var _field = self.getTemplateField(nestedFacet.field(), vm.collection.template.fieldsAttributes());
-        return self._get_field_operations(_field, facet);
-      });
+      nestedFacet.aggregate.metrics = HIT_OPTIONS;//ko.computed(function() {
+//        var _field = self.getTemplateField(nestedFacet.field(), vm.collection.template.fieldsAttributes());
+//        return self._get_field_operations(_field, facet);
+//      });
+      
+      nestedFacet.aggregate.facetFieldsNames = ko.computed(function() {console.log(nestedFacet.aggregate.function());
+     	 if (['avg', 'sum', 'median', 'percentile', 'stddev', 'variance'].indexOf(nestedFacet.aggregate.function()) != -1) {
+     	   return $.grep(self.template.facetFieldsNames(), function(field) { console.log(field);
+     	     return isNumericColumn(field.type()) || isDateTimeColumn(field.type());
+     	   });
+     	   // filter isNumericColumn, isDateTimeColumn
+     	 } else {
+     	    return self.template.facetFieldsNames();
+     	 }
+       });
     }
 
     nestedFacet.isEditing = ko.observable(false);
@@ -1069,11 +1095,22 @@ var Collection = function (vm, collection) {
       'type': ko.mapping.toJS(facet.properties.facets_form.type),
       'isEditing': false
     });
-    pivot.aggregate.metrics = ko.computed(function() {
-      var _field = self.getTemplateField(pivot.field(), self.template.fieldsAttributes());
-      return self._get_field_operations(_field, facet);
-    });
+    pivot.aggregate.metrics = HIT_OPTIONS; //ko.computed(function() {
+//      var _field = self.getTemplateField(pivot.field(), self.template.fieldsAttributes());
+//      return self._get_field_operations(_field, facet);
+//    });
 
+    pivot.aggregate.facetFieldsNames = ko.computed(function() {
+    	 if (['avg', 'sum', 'median', 'percentile', 'stddev', 'variance'].indexOf(pivot.aggregate.function()) != -1) {
+    	   return $.grep(self.template.facetFieldsNames(), function(field) {
+    	     return isNumericColumn(field.type()) || isDateTimeColumn(field.type());
+    	   });
+    	   // filter isNumericColumn, isDateTimeColumn
+    	 } else {
+    	    return self.template.facetFieldsNames();
+    	 }
+      });
+    
     facet.properties.facets_form.field(null);
     facet.properties.facets_form.limit(5);
     facet.properties.facets_form.mincount(1);
@@ -1187,7 +1224,7 @@ var Collection = function (vm, collection) {
   });
 
   self.template.facetFieldsNames = ko.computed(function () {
-    return ['formula'].concat(self.template.fieldsNames());
+    return self.template.fieldsNames();
   });
 
   self.template.sortedGeogFieldsNames = ko.computed(function () {

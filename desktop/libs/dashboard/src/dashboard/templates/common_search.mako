@@ -2153,12 +2153,12 @@ ${ dashboard.layout_skeleton(suffix='search') }
       <input type="number" class="input-mini" data-bind="value: percentile"/>
       <!-- /ko -->
 
-      <select data-bind="options: $root.collection.template.facetFieldsNames, value: $parent.field, optionsCaption: '${ _ko('Field...') }', selectize: $root.collection.template.facetFieldsNames" class="hit-options input-small" style="margin-bottom: 0"></select>
+      <select data-bind="options: facetFieldsNames, value: $parent.field, optionsCaption: '${ _ko('Field...') }', selectize: facetFieldsNames" class="hit-options input-small" style="margin-bottom: 0"></select>
 
       <div class="clearfix"></div>
       <br/>
 
-      <div data-bind="component: { name: 'hue-simple-ace-editor', params: { value: plain_formula, parsedValue: formula, autocomplete: { type: 'solrFormula', support: { fields: $root.collection.template.fieldsAttributes } }, singleLine: true, mode: $root.collection.engine() } }, visible: $parent.field() == 'formula'" class="margin-bottom-10"></div>
+      <div data-bind="component: { name: 'hue-simple-ace-editor', params: { value: plain_formula, parsedValue: formula, autocomplete: { type: 'solrFormula', support: { fields: $root.collection.template.fieldsAttributes } }, singleLine: true, mode: $root.collection.engine() } }, visible: $data.function() == 'formula'" class="margin-bottom-10"></div>
 
       <!-- ko if: $parents[1].widgetType() != 'hit-widget' -->
         <div class="facet-field-cnt">
@@ -2241,7 +2241,7 @@ ${ dashboard.layout_skeleton(suffix='search') }
         </a>
         <!-- /ko -->
         <!-- ko if: typeof $parents[0].isAdding !== 'undefined' && $parents[0].isAdding() -->
-        <a data-bind="visible: (typeof field !== 'undefined' && field() != 'formula') || aggregate.formula(), click: function() { $root.collection.addPivotFacetValue2($parents[0]) }" class="pull-right" href="javascript:void(0)">
+        <a data-bind="visible: aggregate.function() != 'formula' || aggregate.formula(), click: function() { $root.collection.addPivotFacetValue2($parents[0]) }" class="pull-right" href="javascript:void(0)">
           <i class="fa fa-plus"></i> ${ _('Add') }
         </a>
         <!-- /ko -->
@@ -3001,7 +3001,8 @@ var NUMERIC_HIT_OPTIONS = [
     { value: "median", label: "${ _('Median') }" },
     { value: "percentile", label: "${ _('Percentile') }" },
     { value: "stddev", label: "${ _('Stddev') }" },
-    { value: "variance", label: "${ _('Variance') }" }
+    { value: "variance", label: "${ _('Variance') }" },
+    { value: "formula", label: "${ _('Formula') }" },
 ];
 var DATETIME_HIT_OPTIONS = [
     { value: "count", label: "${ _('Group by') }" },
@@ -3010,21 +3011,24 @@ var DATETIME_HIT_OPTIONS = [
     { value: "min", label: "${ _('Min') }" },
     { value: "max", label: "${ _('Max') }" },
     { value: "median", label: "${ _('Median') }" },
-    { value: "percentile", label: "${ _('Percentile') }" }
+    { value: "percentile", label: "${ _('Percentile') }" },
+    { value: "formula", label: "${ _('Formula') }" },
 ];
 var ALPHA_HIT_COUNTER_OPTIONS = [
     ##{ value: "count", label: "${ _('Group by') }" },
     ##{ value: "counts", label: "Count" },
     { value: "unique", label: "${ _('Unique') }" },
     { value: "min", label: "${ _('Min') }" },
-    { value: "max", label: "${ _('Max') }" }
+    { value: "max", label: "${ _('Max') }" },
+    { value: "formula", label: "${ _('Formula') }" },
 ];
 var ALPHA_HIT_OPTIONS = [
     { value: "count", label: "${ _('Group by') }" },
     ## { value: "counts", label: "Count" },
     { value: "unique", label: "${ _('Unique') }" },
     { value: "min", label: "${ _('Min') }" },
-    { value: "max", label: "${ _('Max') }" }
+    { value: "max", label: "${ _('Max') }" },
+    { value: "formula", label: "${ _('Formula') }" },
 ];
 var HIT_OPTIONS = NUMERIC_HIT_OPTIONS
 ;
@@ -3045,7 +3049,7 @@ function getHitOption(value) {
 }
 
 function getPrettyMetric(facet) {
-  if (facet.field() == 'formula') {
+  if (facet.aggregate.function() == 'formula') {
     return facet.aggregate.plain_formula()
   } else if (facet.aggregate.function() == 'percentile') {
     return 'percentile(' + facet.aggregate.percentiles()[0]['value']() + ')';
