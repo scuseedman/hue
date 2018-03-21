@@ -887,13 +887,13 @@ var Collection = function (vm, collection) {
 
   self._getCompatibleMetricFields = function(nestedFacet) {
   	 if (['avg', 'sum', 'median', 'percentile', 'stddev', 'variance'].indexOf(nestedFacet.aggregate.function()) != -1) {
-   	   return $.map($.grep(self.template.fieldsAttributes(), function(field) {
+   	   return $.grep(self.template.fieldsAttributes(), function(field) {
    	     return isNumericColumn(field.type()) || isDateTimeColumn(field.type());
-   	   }),
-   	   function (field) {
-   	     return field.name();
-   	   }).sort(function (a, b) {
-   	     return a.toLowerCase().localeCompare(b.toLowerCase());
+   	   })
+   	   //function (field) {
+   	     //return field.name();
+   	   .sort(function (a, b) {
+   	     return a.name().toLowerCase().localeCompare(b.name().toLowerCase());
    	   });
    	 } else {
   	   return self.template.facetFieldsNames();
@@ -1218,7 +1218,8 @@ var Collection = function (vm, collection) {
   });
 
   self.template.facetFieldsNames = ko.computed(function () {
-    return self.template.fieldsNames();
+//    return self.template.fieldsNames();
+	  return self.template.fieldsAttributes();
   });
 
   self.template.sortedGeogFieldsNames = ko.computed(function () {
