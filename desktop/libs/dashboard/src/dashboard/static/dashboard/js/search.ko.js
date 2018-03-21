@@ -755,16 +755,9 @@ var Collection = function (vm, collection) {
 
       // Here we could weight the fields
       facet.properties.facets_form.aggregate.facetFieldsNames = ko.computed(function() {
-    	 if (['avg', 'sum', 'median', 'percentile', 'stddev', 'variance'].indexOf(facet.properties.facets_form.aggregate.function()) != -1) {
-    	   return $.grep(self.template.facetFieldsNames(), function(field) {
-    	     return isNumericColumn(field.type()) || isDateTimeColumn(field.type());
-    	   });
-    	   // filter isNumericColumn, isDateTimeColumn
-    	 } else {
-    	    return self.template.facetFieldsNames();
-    	 }
+        return self._getCompatibleMetricFields(facet.properties.facets_form);
       });
-      
+
       facet.properties.facets_form.isEditing = ko.observable(true);
 
       if (facet.properties.facets) {
@@ -884,21 +877,29 @@ var Collection = function (vm, collection) {
 //        return self._get_field_operations(_field, facet);
 //      });
       
-      nestedFacet.aggregate.facetFieldsNames = ko.computed(function() {console.log(nestedFacet.aggregate.function());
-     	 if (['avg', 'sum', 'median', 'percentile', 'stddev', 'variance'].indexOf(nestedFacet.aggregate.function()) != -1) {
-     	   return $.grep(self.template.facetFieldsNames(), function(field) { console.log(field);
-     	     return isNumericColumn(field.type()) || isDateTimeColumn(field.type());
-     	   });
-     	   // filter isNumericColumn, isDateTimeColumn
-     	 } else {
-     	    return self.template.facetFieldsNames();
-     	 }
-       });
+      nestedFacet.aggregate.facetFieldsNames = ko.computed(function() {
+        return self._getCompatibleMetricFields(nestedFacet);
+      });
     }
 
     nestedFacet.isEditing = ko.observable(false);
   }
 
+  self._getCompatibleMetricFields = function(nestedFacet) {
+  	 if (['avg', 'sum', 'median', 'percentile', 'stddev', 'variance'].indexOf(nestedFacet.aggregate.function()) != -1) {
+   	   return $.map($.grep(self.template.fieldsAttributes(), function(field) {
+   	     return isNumericColumn(field.type()) || isDateTimeColumn(field.type());
+   	   }),
+   	   function (field) {
+   	     return field.name();
+   	   }).sort(function (a, b) {
+   	     return a.toLowerCase().localeCompare(b.toLowerCase());
+   	   });
+   	 } else {
+  	   return self.template.facetFieldsNames();
+  	 }
+  };
+  
   self.facets = ko.mapping.fromJS(collection.facets);
 
   $.each(self.facets(), function (index, facet) {
@@ -1101,15 +1102,8 @@ var Collection = function (vm, collection) {
 //    });
 
     pivot.aggregate.facetFieldsNames = ko.computed(function() {
-    	 if (['avg', 'sum', 'median', 'percentile', 'stddev', 'variance'].indexOf(pivot.aggregate.function()) != -1) {
-    	   return $.grep(self.template.facetFieldsNames(), function(field) {
-    	     return isNumericColumn(field.type()) || isDateTimeColumn(field.type());
-    	   });
-    	   // filter isNumericColumn, isDateTimeColumn
-    	 } else {
-    	    return self.template.facetFieldsNames();
-    	 }
-      });
+      return self._getCompatibleMetricFields(pivot);
+    });
     
     facet.properties.facets_form.field(null);
     facet.properties.facets_form.limit(5);
